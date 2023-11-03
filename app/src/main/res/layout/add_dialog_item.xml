@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:gravity="start|center"
+            android:gravity="center"
             android:text="Date"
             android:textSize="@dimen/_20sdp" />
 
@@ -31,6 +31,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:gravity="center"
             android:backgroundTint="@color/white"
             android:focusable="false"
             android:focusableInTouchMode="false"
@@ -49,7 +50,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:gravity="start|center"
+            android:gravity="center"
             android:text="Time"
             android:textSize="@dimen/_20sdp" />
 
@@ -58,6 +59,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:gravity="center"
             android:backgroundTint="@color/white"
             android:focusable="false"
             android:focusableInTouchMode="false"
@@ -76,7 +78,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:gravity="start|center"
+            android:gravity="center"
             android:text="Description"
             android:textSize="@dimen/_20sdp" />
 
@@ -85,6 +87,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:gravity="center"
             android:backgroundTint="@color/white"
             android:hint="ADD DESCRIPTION"
             android:maxLines="2"

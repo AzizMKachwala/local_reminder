@@ -78,12 +78,12 @@ public class UpcomingAdapter extends RecyclerView.Adapter<UpcomingAdapter.Upcomi
         holder.imgDoneUF.setOnClickListener(view -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
             builder.setTitle("Mark as Done?");
-            builder.setMessage("Do you want to Mark " + myDbDataModel.getDescription() + "Item as Completed?");
+            builder.setMessage("Do you want to Mark " + myDbDataModel.getDescription() + " Item as Completed?");
             builder.setCancelable(false);
 
             builder.setPositiveButton("Yes", (dialogInterface, which) -> {
-                myDataBaseHandler.insertDataCompleted(myDbDataModel.getDate(), myDbDataModel.getTime(), myDbDataModel.getDescription());
-                myDataBaseHandler.deleteData(myDbDataModel.getId());
+                int itemIdToMove = myDbDataModel.getId();
+                myDataBaseHandler.moveDataToCompleted(itemIdToMove);
                 dataModelList.remove(position);
                 notifyItemRemoved(position);
                 notifyItemRangeChanged(position, dataModelList.size());

@@ -40,7 +40,10 @@
             android:name=".AlarmReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.example.localreminder.ACTION_ALARM" />
+                <action android:name="com.example.localreminder.ACTION_ALARM"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.android.alarmmanager.ACTION_ALARM_RECEIVER" />
             </intent-filter>
         </receiver>
 

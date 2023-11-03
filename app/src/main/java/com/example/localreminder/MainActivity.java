@@ -13,7 +13,6 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -22,6 +21,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 public class MainActivity extends AppCompatActivity {
@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     TabLayout tabLayout;
     ViewPager2 viewPager2;
     UpcomingFragment upcomingFragment;
+    UpcomingAdapter upcomingAdapter;
     CompletedFragment completedFragment;
     SwitchMaterial switchLock;
     LinearLayout lyt;
@@ -39,6 +40,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String SWITCH_STATE_KEY = "biometricSwitchState";
     private boolean isBiometricEnabled = false;
     private boolean userLoggedIn = false;
+
+    List<MyDbDataModel> dataModelList;
+    MyDbDataModel myDbDataModel;
+    MyDataBaseHandler myDataBaseHandler;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -67,6 +72,58 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }).attach();
+
+        boolean notificationClicked = getIntent().getBooleanExtra("notification_clicked", false);
+        if (notificationClicked) {
+
+            Toast.makeText(this, "Notification Clicked", Toast.LENGTH_SHORT).show();
+            String description = getIntent().getStringExtra("description");
+            String date = getIntent().getStringExtra("date");
+            String time = getIntent().getStringExtra("time");
+
+            String message = "\tDATE : " + date + "\n\tTIME : " + time + "\n\tDESCRIPTION : " + description;
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setTitle("Notification");
+            builder.setMessage(message);
+            builder.setCancelable(false);
+
+            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    Toast.makeText(MainActivity.this, "Yes Clicked", Toast.LENGTH_SHORT).show();
+
+                    AlarmReceiver alarmReceiver = new AlarmReceiver();
+                    alarmReceiver.stopAlarm();
+
+                    if (i >= 0 && i < dataModelList.size()) {
+                        MyDbDataModel myDbDataModel = dataModelList.get(i);
+                        int itemIdToMove = myDbDataModel.getId();
+                        myDataBaseHandler.moveDataToCompleted(itemIdToMove);
+                    } else {
+                        // Handle the case when 'i' is not a valid index
+                        Toast.makeText(MainActivity.this, "Invalid Id Found", Toast.LENGTH_SHORT).show();
+                    }
+
+                    dialogInterface.dismiss();
+                }
+            });
+
+            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    Toast.makeText(MainActivity.this, "No Clicked", Toast.LENGTH_SHORT).show();
+
+                    AlarmReceiver alarmReceiver = new AlarmReceiver();
+                    alarmReceiver.stopAlarm();
+
+                    dialogInterface.dismiss();
+                }
+            });
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
 
         sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
         isBiometricEnabled = sharedPreferences.getBoolean(SWITCH_STATE_KEY, false);

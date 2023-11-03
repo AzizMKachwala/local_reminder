@@ -1,5 +1,6 @@
 package com.example.localreminder;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -36,12 +37,13 @@ public class CompletedAdapter extends RecyclerView.Adapter<CompletedAdapter.Comp
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CompletedDataViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull CompletedDataViewHolder holder, @SuppressLint("RecyclerView") int position) {
         myDbDataModel = completedDataModelList.get(position);
         holder.txtDateCF.setText(myDbDataModel.getDate());
         holder.txtTimeCF.setText(myDbDataModel.getTime());
         holder.txtDescCF.setText(myDbDataModel.getDescription());
 
+        holder.imgDeleteCF.setVisibility(View.GONE);
         holder.imgDeleteCF.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -61,14 +63,10 @@ public class CompletedAdapter extends RecyclerView.Adapter<CompletedAdapter.Comp
                     Toast.makeText(view.getContext(), "Item Deleted", Toast.LENGTH_SHORT).show();
                 });
 
-                builder.setNegativeButton("No", (dialogInterface, which) ->
-                        dialogInterface.dismiss());
+                builder.setNegativeButton("No", (dialogInterface, which) -> dialogInterface.dismiss());
 
                 AlertDialog dialog = builder.create();
                 dialog.show();
-
-
-
             }
         });
     }

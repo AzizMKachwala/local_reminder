@@ -52,6 +52,37 @@ public class MyDataBaseHandler extends SQLiteOpenHelper {
 
     }
 
+    public void moveDataToCompleted(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // Retrieve data from Upcoming table based on the ID
+        Cursor cursor = db.query(TABLE_EVENTS, new String[]{KEY_ID, KEY_DATE, KEY_TIME, KEY_DESCRIPTION},
+                KEY_ID + "=?", new String[]{String.valueOf(id)}, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            @SuppressLint("Range") String date = cursor.getString(cursor.getColumnIndex(KEY_DATE));
+            @SuppressLint("Range") String time = cursor.getString(cursor.getColumnIndex(KEY_TIME));
+            @SuppressLint("Range") String description = cursor.getString(cursor.getColumnIndex(KEY_DESCRIPTION));
+
+            // Insert data into Completed table
+            ContentValues values = new ContentValues();
+            values.put(KEY_DATE_COMPLETED, date);
+            values.put(KEY_TIME_COMPLETED, time);
+            values.put(KEY_DESCRIPTION_COMPLETED, description);
+            db.insert(TABLE_COMPLETED, null, values);
+
+            // Delete data from Upcoming table
+            db.delete(TABLE_EVENTS, KEY_ID + "=?", new String[]{String.valueOf(id)});
+        }
+
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        db.close();
+    }
+
+
     public ArrayList<MyDbDataModel> getAllData() {
         ArrayList<MyDbDataModel> dataList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();

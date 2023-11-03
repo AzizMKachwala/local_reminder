@@ -24,7 +24,7 @@ public class SplashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_splash);
 
         splash_image = findViewById(R.id.splash_image);
-        Animation animation = AnimationUtils.loadAnimation(this, R.anim.rotate);
+        Animation animation = AnimationUtils.loadAnimation(this, R.anim.zoom);
         splash_image.startAnimation(animation);
 
         new Handler().postDelayed(new Runnable() {
