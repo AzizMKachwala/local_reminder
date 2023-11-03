@@ -1,15 +1,23 @@
 package com.example.localreminder;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.DatePickerDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,8 +31,11 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class UpcomingFragment extends Fragment {
@@ -34,9 +45,11 @@ public class UpcomingFragment extends Fragment {
     UpcomingAdapter upcomingAdapter;
     Button btnSave, btnCancel;
     TextView txtDialog;
+    SwipeRefreshLayout swipeRefreshLayout;
     EditText etvDateSelect, etvTimeSelect, etvDesc;
     private ArrayList<MyDbDataModel> dataList;
 
+    @SuppressLint("MissingInflatedId")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
@@ -44,10 +57,29 @@ public class UpcomingFragment extends Fragment {
 
         upcomingListRecyclerView = view.findViewById(R.id.upcomingListRecyclerView);
         btnAdd = view.findViewById(R.id.btnAdd);
+        swipeRefreshLayout = view.findViewById(R.id.swipe);
         MyDataBaseHandler myDatabaseHandler = new MyDataBaseHandler(requireContext());
         dataList = myDatabaseHandler.getAllData();
 
-//        createNotificationChannel();
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                ArrayList<MyDbDataModel> newDataList = myDatabaseHandler.getAllData();
+                upcomingAdapter.updateData(newDataList);
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "akChannel";
+            String desc = "Channel for Alarm Manager";
+            int imp = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel("androidKnowledge", name, imp);
+            channel.setDescription(desc);
+            NotificationManager notificationManager = (NotificationManager) requireContext().
+                    getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(channel);
+        }
 
         upcomingAdapter = new UpcomingAdapter(dataList,
                 new UpcomingAdapter.OnEditItemClickListener() {
@@ -119,7 +151,7 @@ public class UpcomingFragment extends Fragment {
                             ArrayList<MyDbDataModel> newDataModelArrayList = myDatabaseHandler.getAllData();
                             upcomingAdapter.updateData(newDataModelArrayList);
                             Toast.makeText(getContext(), "Data Inserted Successfully", Toast.LENGTH_SHORT).show();
-//                            scheduleAlarm(date, time, description);
+                            scheduleAlarm(date, time, description);
                             dialog.dismiss();
                         } else {
                             Toast.makeText(getContext(), "Please fill in all the fields", Toast.LENGTH_SHORT).show();
@@ -143,53 +175,37 @@ public class UpcomingFragment extends Fragment {
         return view;
     }
 
-//    private void scheduleAlarm(String date, String time, String description) {
-//        AlarmManager alarmManager = (AlarmManager) requireContext().getSystemService(Context.ALARM_SERVICE);
-//
-//        // Parse date and time strings to get the timestamp
-//        long alarmTimestamp = getAlarmTimestamp(date, time);
-//
-//        // Create an intent for the AlarmReceiver
-//        Intent alarmIntent = new Intent(requireContext(), AlarmReceiver.class);
-//        alarmIntent.putExtra("description", description);
-//
-//        // Use a unique requestCode to distinguish different alarms
-//        int requestCode = (int) System.currentTimeMillis();
-//
-//        // Create a PendingIntent to be triggered when the alarm fires
-//        PendingIntent pendingIntent = PendingIntent.getBroadcast(requireContext(), requestCode, alarmIntent, PendingIntent.FLAG_IMMUTABLE);
-//
-//        // Set the alarm using AlarmManager
-//        if (alarmManager != null) {
-//            alarmManager.set(AlarmManager.RTC_WAKEUP, alarmTimestamp, pendingIntent);
-//            Toast.makeText(getContext(), "Alarm Set", Toast.LENGTH_SHORT).show();
-//        }
-//    }
+    private void scheduleAlarm(String date, String time, String desc) {
+        // Parse the date and time strings into a Calendar object
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault());
+        try {
+            Date dateTime = sdf.parse(date + " " + time);
+            calendar.setTime(dateTime);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
 
-//    private long getAlarmTimestamp(String date, String time) {
-//        try {
-//            String dateTimeString = date + " " + time;
-//            SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault());
-//            Date dateTime = format.parse(dateTimeString);
-//            return dateTime != null ? dateTime.getTime() : 0;
-//        } catch (ParseException e) {
-//            e.printStackTrace();
-//            return 0;
-//        }
-//    }
+        // Create an Intent for the AlarmReceiver
+        Intent intent = new Intent(requireContext(), AlarmReceiver.class);
+        intent.putExtra("description", desc);
+        intent.putExtra("time", time);
+        intent.putExtra("date", date);
 
-//    private void createNotificationChannel() {
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                CharSequence name = "akChannel";
-//                String desc = "Channel for Alarm Manager";
-//                int imp = NotificationManager.IMPORTANCE_HIGH;
-//                NotificationChannel channel = new NotificationChannel("androidKnowledge", name, imp);
-//                channel.setDescription(desc);
-//                NotificationManager notificationManager = (NotificationManager) requireContext().
-//                        getSystemService(Context.NOTIFICATION_SERVICE);
-//                notificationManager.createNotificationChannel(channel);
-//            }
-//        }
+        // Create a PendingIntent
+        int alarmId = (int) System.currentTimeMillis(); // Unique ID for each alarm
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(requireContext(), alarmId, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        // Get the AlarmManager
+        AlarmManager alarmManager = (AlarmManager) requireContext().getSystemService(Context.ALARM_SERVICE);
+
+        // Set the alarm
+        if (alarmManager != null) {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+        }
+
+        Toast.makeText(requireContext(), "Alarm set", Toast.LENGTH_SHORT).show();
+    }
 
     private void showEditDialog(MyDbDataModel clickedItem) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -244,7 +260,7 @@ public class UpcomingFragment extends Fragment {
                     ArrayList<MyDbDataModel> newDataModelArrayList = myDatabaseHandler.getAllData();
                     upcomingAdapter.updateData(newDataModelArrayList);
                     Toast.makeText(getContext(), "Data Updated Successfully", Toast.LENGTH_SHORT).show();
-//                    scheduleAlarm(date, time, description);
+                    scheduleAlarm(date, time, description);
                     dialog.dismiss();
                 } else {
                     Toast.makeText(getContext(), "Please fill in all the fields", Toast.LENGTH_SHORT).show();
